@@ -19,6 +19,7 @@ package org.apache.livy.server.interactive
 
 import java.net.URI
 import javax.servlet.http.HttpServletRequest
+import org.apache.livy.LivyConf.AUTH_TYPE
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -52,7 +53,20 @@ class InteractiveSessionServlet(
 
   override protected def createSession(req: HttpServletRequest): InteractiveSession = {
     val createRequest = bodyAs[CreateInteractiveRequest](req)
-    val proxyUser = checkImpersonation(createRequest.proxyUser, req)
+    val proxyUser =  if(livyConf.get(AUTH_TYPE) == "basic") {
+      import org.pac4j.core.context.J2EContext
+      import org.pac4j.core.profile.CommonProfile
+      import org.pac4j.core.profile.ProfileManager
+      val context = new J2EContext(request, response)
+      val manager = new ProfileManager[CommonProfile](context)
+      val profile = manager.get(false)
+      if(profile.isPresent)
+        Some(profile.get().getId)
+      else
+        None
+    } else
+      checkImpersonation(createRequest.proxyUser, req)
+
     InteractiveSession.create(
       sessionManager.nextId(),
       remoteUser(req),

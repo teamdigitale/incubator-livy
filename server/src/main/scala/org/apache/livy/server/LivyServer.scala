@@ -24,7 +24,6 @@ import javax.servlet._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import org.apache.hadoop.security.{SecurityUtil, UserGroupInformation}
 import org.apache.hadoop.security.authentication.server._
 import org.eclipse.jetty.servlet.FilterHolder
@@ -32,7 +31,6 @@ import org.scalatra.{NotFound, ScalatraServlet}
 import org.scalatra.metrics.MetricsBootstrap
 import org.scalatra.metrics.MetricsSupportExtensions._
 import org.scalatra.servlet.{MultipartConfig, ServletApiImplicits}
-
 import org.apache.livy._
 import org.apache.livy.server.batch.BatchSessionServlet
 import org.apache.livy.server.interactive.InteractiveSessionServlet
@@ -42,6 +40,8 @@ import org.apache.livy.sessions.{BatchSessionManager, InteractiveSessionManager}
 import org.apache.livy.sessions.SessionManager.SESSION_RECOVERY_MODE_OFF
 import org.apache.livy.utils.LivySparkUtils._
 import org.apache.livy.utils.SparkYarnApp
+import org.eclipse.jetty.server.session.{HashSessionIdManager, HashSessionManager, SessionHandler}
+import org.pac4j.j2e.filter.SecurityFilter
 
 class LivyServer extends Logging {
 
@@ -236,6 +236,19 @@ class LivyServer extends Logging {
           livyConf.get(AUTH_KERBEROS_NAME_RULES))
         server.context.addFilter(holder, "/*", EnumSet.allOf(classOf[DispatcherType]))
         info(s"SPNEGO auth enabled (principal = $principal)")
+
+      case authType@"basic" =>
+        InitPac4jSecurity(livyConf)
+        val securityFilter = new SecurityFilter()
+        securityFilter.setConfig(InitPac4jSecurity.config.get)
+        val holder = new FilterHolder(securityFilter)
+        holder.setInitParameter("clients", "DirectBasicAuthClient, HeaderClient")
+        server.context.addFilter(holder, "/*", EnumSet.allOf(classOf[DispatcherType]))
+        val idmanager = new HashSessionIdManager
+        server.server.setSessionIdManager(idmanager)
+        val manager = new HashSessionManager
+        val sessions = new SessionHandler(manager)
+        server.context.setHandler(sessions)
 
      case null =>
         // Nothing to do.

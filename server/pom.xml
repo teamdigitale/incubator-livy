@@ -176,6 +176,26 @@
     </dependency>
 
     <dependency>
+      <groupId>org.pac4j</groupId>
+      <artifactId>j2e-pac4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.pac4j</groupId>
+      <artifactId>pac4j-http</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.pac4j</groupId>
+      <artifactId>pac4j-jwt</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.pac4j</groupId>
+      <artifactId>pac4j-ldap</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.livy</groupId>
       <artifactId>livy-repl_${scala.binary.version}</artifactId>
       <version>${project.version}</version>
