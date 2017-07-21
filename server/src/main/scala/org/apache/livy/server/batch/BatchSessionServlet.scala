@@ -20,35 +20,46 @@ package org.apache.livy.server.batch
 import javax.servlet.http.HttpServletRequest
 
 import org.apache.livy.LivyConf
+import org.apache.livy.LivyConf.AUTH_TYPE
 import org.apache.livy.server.SessionServlet
 import org.apache.livy.server.recovery.SessionStore
 import org.apache.livy.sessions.BatchSessionManager
 import org.apache.livy.utils.AppInfo
 
 case class BatchSessionView(
-  id: Long,
-  state: String,
-  appId: Option[String],
-  appInfo: AppInfo,
-  log: Seq[String])
+                             id: Long,
+                             state: String,
+                             appId: Option[String],
+                             appInfo: AppInfo,
+                             log: Seq[String])
 
 class BatchSessionServlet(
-    sessionManager: BatchSessionManager,
-    sessionStore: SessionStore,
-    livyConf: LivyConf)
-  extends SessionServlet(sessionManager, livyConf)
-{
+                           sessionManager: BatchSessionManager,
+                           sessionStore: SessionStore,
+                           livyConf: LivyConf)
+  extends SessionServlet(sessionManager, livyConf) {
 
   override protected def createSession(req: HttpServletRequest): BatchSession = {
     val createRequest = bodyAs[CreateBatchRequest](req)
-    val proxyUser = checkImpersonation(createRequest.proxyUser, req)
+    val proxyUser = if (livyConf.get(AUTH_TYPE) == "basic") {
+      import org.pac4j.core.context.J2EContext
+      import org.pac4j.core.profile.{CommonProfile, ProfileManager}
+      val context = new J2EContext(request, response)
+      val manager = new ProfileManager[CommonProfile](context)
+      val profile = manager.get(false)
+      if (profile.isPresent)
+        Some(profile.get().getUsername)
+      else
+        None
+    } else
+      checkImpersonation(createRequest.proxyUser, req)
     BatchSession.create(
       sessionManager.nextId(), createRequest, livyConf, remoteUser(req), proxyUser, sessionStore)
   }
 
   override protected[batch] def clientSessionView(
-      session: BatchSession,
-      req: HttpServletRequest): Any = {
+                                                   session: BatchSession,
+                                                   req: HttpServletRequest): Any = {
     val logs =
       if (hasAccess(session.owner, req)) {
         val lines = session.logLines()

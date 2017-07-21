@@ -533,6 +533,30 @@
         <version>1.7.0</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.pac4j</groupId>
+        <artifactId>j2e-pac4j</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.pac4j</groupId>
+        <artifactId>pac4j-http</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.pac4j</groupId>
+        <artifactId>pac4j-jwt</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.pac4j</groupId>
+        <artifactId>pac4j-ldap</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
