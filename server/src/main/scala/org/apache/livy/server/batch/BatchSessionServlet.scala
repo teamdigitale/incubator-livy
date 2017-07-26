@@ -21,8 +21,8 @@ import javax.servlet.http.HttpServletRequest
 
 import org.apache.livy.LivyConf
 import org.apache.livy.LivyConf.AUTH_TYPE
-import org.apache.livy.server.SessionServlet
 import org.apache.livy.server.recovery.SessionStore
+import org.apache.livy.server.{AccessManager, SessionServlet}
 import org.apache.livy.sessions.BatchSessionManager
 import org.apache.livy.utils.AppInfo
 
@@ -36,8 +36,9 @@ case class BatchSessionView(
 class BatchSessionServlet(
                            sessionManager: BatchSessionManager,
                            sessionStore: SessionStore,
-                           livyConf: LivyConf)
-  extends SessionServlet(sessionManager, livyConf) {
+                           livyConf: LivyConf,
+                           accessManager: AccessManager)
+  extends SessionServlet(sessionManager, livyConf, accessManager) {
 
   override protected def createSession(req: HttpServletRequest): BatchSession = {
     val createRequest = bodyAs[CreateBatchRequest](req)
@@ -61,7 +62,7 @@ class BatchSessionServlet(
                                                    session: BatchSession,
                                                    req: HttpServletRequest): Any = {
     val logs =
-      if (hasAccess(session.owner, req)) {
+      if (hasViewAccess(session.owner, req)) {
         val lines = session.logLines()
 
         val size = 10
