@@ -35,11 +35,6 @@
     </license>
   </licenses>
 
-  <organization>
-    <name>Cloudera Inc</name>
-    <url>http://www.cloudera.com</url>
-  </organization>
-
   <properties>
     <hadoop.version>2.7.3</hadoop.version>
     <hadoop.scope>compile</hadoop.scope>
@@ -1056,6 +1051,7 @@
       </activation>
       <properties>
         <spark.version>2.2.0</spark.version>
+        <java.version>1.8</java.version>
       </properties>
     </profile>
 
