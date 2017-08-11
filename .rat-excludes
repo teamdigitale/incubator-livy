@@ -1,9 +1,6 @@
 .rat-excludes
-.travis.yml
 logs/*
-conf/*
 **/*.conf
-**/META-INF/**
 **/*.json
 **/*.md
 *.iml
@@ -25,3 +22,7 @@ conf/*
 **/derby.log
 **/metastore_db/**
 **/.eggs/**
+**/Gemfile.lock
+**/jquery-2.1.1.min.js
+docs/**/*.html
+docs/**/JB/**
