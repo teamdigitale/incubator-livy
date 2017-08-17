@@ -802,6 +802,12 @@
           <version>1.5</version>
         </plugin>
 
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>1.13</version>
+        </plugin>
+
       </plugins>
     </pluginManagement>
 
@@ -1156,6 +1162,40 @@
         </plugins>
       </build>
     </profile>
+
+  <profile>
+    <!-- This will search remote and local repos to generate THIRD-PARTY license file, make sure
+    livy artifacts existed in either remote or local repos, otherwise run mvn install before. -->
+    <id>generate-third-party</id>
+    <activation>
+      <property>
+        <name>generate-third-party</name>
+      </property>
+    </activation>
+    <build>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <inherited>false</inherited>
+          <configuration>
+            <outputDirectory>${execution.root}</outputDirectory>
+            <thirdPartyFilename>THIRD-PARTY</thirdPartyFilename>
+            <sortArtifactByName>true</sortArtifactByName>
+            <fileTemplate>${execution.root}/dev/third-party-file.ftl</fileTemplate>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>aggregate-add-third-party</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </build>
+  </profile>
 
   </profiles>
 
