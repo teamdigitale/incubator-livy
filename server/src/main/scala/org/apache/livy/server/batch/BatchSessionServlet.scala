@@ -49,12 +49,15 @@ class BatchSessionServlet(
       val context = new J2EContext(request, response)
       val manager = new ProfileManager[CommonProfile](context)
       val profile = manager.get(false)
-      if (profile.isPresent)
+      if (profile.isPresent) {
         Some(profile.get().getUsername)
-      else
+      }
+      else {
         None
-    } else
+      }
+    } else {
       checkImpersonation(createRequest.proxyUser, req)
+    }
     BatchSession.create(
       sessionManager.nextId(), createRequest, livyConf, remoteUser(req), proxyUser, sessionStore)
   }
