@@ -21,8 +21,8 @@ import javax.servlet.http.HttpServletRequest
 
 import org.apache.livy.LivyConf
 import org.apache.livy.LivyConf.AUTH_TYPE
-import org.apache.livy.server.recovery.SessionStore
 import org.apache.livy.server.{AccessManager, SessionServlet}
+import org.apache.livy.server.recovery.SessionStore
 import org.apache.livy.sessions.BatchSessionManager
 import org.apache.livy.utils.AppInfo
 
@@ -48,12 +48,15 @@ class BatchSessionServlet(
       val context = new J2EContext(request, response)
       val manager = new ProfileManager[CommonProfile](context)
       val profile = manager.get(false)
-      if (profile.isPresent)
+      if (profile.isPresent) {
         Some(profile.get().getUsername)
-      else
+      }
+      else {
         None
-    } else
+      }
+    } else {
       checkImpersonation(createRequest.proxyUser, req)
+    }
     BatchSession.create(
       sessionManager.nextId(), createRequest, livyConf, remoteUser(req), proxyUser, sessionStore)
   }

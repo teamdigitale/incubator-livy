@@ -24,13 +24,17 @@ import javax.servlet._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 import org.apache.hadoop.security.{SecurityUtil, UserGroupInformation}
 import org.apache.hadoop.security.authentication.server._
+import org.eclipse.jetty.server.session.{HashSessionIdManager, HashSessionManager, SessionHandler}
 import org.eclipse.jetty.servlet.FilterHolder
+import org.pac4j.j2e.filter.SecurityFilter
 import org.scalatra.{NotFound, ScalatraServlet}
 import org.scalatra.metrics.MetricsBootstrap
 import org.scalatra.metrics.MetricsSupportExtensions._
 import org.scalatra.servlet.{MultipartConfig, ServletApiImplicits}
+
 import org.apache.livy._
 import org.apache.livy.server.batch.BatchSessionServlet
 import org.apache.livy.server.interactive.InteractiveSessionServlet
@@ -40,8 +44,6 @@ import org.apache.livy.sessions.{BatchSessionManager, InteractiveSessionManager}
 import org.apache.livy.sessions.SessionManager.SESSION_RECOVERY_MODE_OFF
 import org.apache.livy.utils.LivySparkUtils._
 import org.apache.livy.utils.SparkYarnApp
-import org.eclipse.jetty.server.session.{HashSessionIdManager, HashSessionManager, SessionHandler}
-import org.pac4j.j2e.filter.SecurityFilter
 
 class LivyServer extends Logging {
 

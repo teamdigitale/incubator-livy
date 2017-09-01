@@ -19,7 +19,6 @@ package org.apache.livy.server.interactive
 
 import java.net.URI
 import javax.servlet.http.HttpServletRequest
-import org.apache.livy.LivyConf.AUTH_TYPE
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -32,6 +31,7 @@ import org.scalatra.servlet.FileUploadSupport
 import org.apache.livy.{ExecuteRequest, JobHandle, LivyConf, Logging}
 import org.apache.livy.client.common.HttpMessages
 import org.apache.livy.client.common.HttpMessages._
+import org.apache.livy.LivyConf.AUTH_TYPE
 import org.apache.livy.server.{AccessManager, SessionServlet}
 import org.apache.livy.server.recovery.SessionStore
 import org.apache.livy.sessions._
@@ -53,20 +53,22 @@ class InteractiveSessionServlet(
 
   override protected def createSession(req: HttpServletRequest): InteractiveSession = {
     val createRequest = bodyAs[CreateInteractiveRequest](req)
-    val proxyUser =  if(livyConf.get(AUTH_TYPE) == "basic") {
+    val proxyUser = if (livyConf.get(AUTH_TYPE) == "basic") {
       import org.pac4j.core.context.J2EContext
       import org.pac4j.core.profile.CommonProfile
       import org.pac4j.core.profile.ProfileManager
       val context = new J2EContext(request, response)
       val manager = new ProfileManager[CommonProfile](context)
       val profile = manager.get(false)
-      if(profile.isPresent)
+      if(profile.isPresent) {
         Some(profile.get().getId)
-      else
+      }
+      else {
         None
-    } else
+      }
+    } else {
       checkImpersonation(createRequest.proxyUser, req)
-
+    }
     InteractiveSession.create(
       sessionManager.nextId(),
       remoteUser(req),
