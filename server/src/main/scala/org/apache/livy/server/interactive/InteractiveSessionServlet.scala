@@ -71,7 +71,12 @@ class InteractiveSessionServlet(
     }
     InteractiveSession.create(
       sessionManager.nextId(),
-      remoteUser(req),
+      if (livyConf.get(AUTH_TYPE) == "basic") {
+        proxyUser.orNull
+      }
+      else {
+        remoteUser(req)
+      },
       proxyUser,
       livyConf,
       createRequest,

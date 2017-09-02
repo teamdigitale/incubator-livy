@@ -49,7 +49,7 @@ class BatchSessionServlet(
       val manager = new ProfileManager[CommonProfile](context)
       val profile = manager.get(false)
       if (profile.isPresent) {
-        Some(profile.get().getUsername)
+        Some(profile.get().getId)
       }
       else {
         None
@@ -58,7 +58,17 @@ class BatchSessionServlet(
       checkImpersonation(createRequest.proxyUser, req)
     }
     BatchSession.create(
-      sessionManager.nextId(), createRequest, livyConf, remoteUser(req), proxyUser, sessionStore)
+      sessionManager.nextId(),
+      createRequest,
+      livyConf,
+      if (livyConf.get(AUTH_TYPE) == "basic") {
+        proxyUser.orNull
+      }
+      else {
+        remoteUser(req)
+      },
+      proxyUser,
+      sessionStore)
   }
 
   override protected[batch] def clientSessionView(

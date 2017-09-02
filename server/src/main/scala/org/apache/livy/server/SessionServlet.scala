@@ -23,38 +23,39 @@ import org.scalatra._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-import org.apache.livy.{LivyConf, Logging}
+import org.apache.livy.LivyConf
+import org.apache.livy.LivyConf.AUTH_TYPE
+import org.apache.livy.Logging
 import org.apache.livy.sessions.{Session, SessionManager}
 import org.apache.livy.sessions.Session.RecoveryMetadata
 
 object SessionServlet extends Logging
 
 /**
- * Base servlet for session management. All helper methods in this class assume that the session
- * id parameter in the handler's URI is "id".
- *
- * Type parameters:
- *  S: the session type
- */
+  * Base servlet for session management. All helper methods in this class assume that the session
+  * id parameter in the handler's URI is "id".
+  *
+  * Type parameters:
+  * S: the session type
+  */
 abstract class SessionServlet[S <: Session, R <: RecoveryMetadata](
     private[livy] val sessionManager: SessionManager[S, R],
     livyConf: LivyConf,
     accessManager: AccessManager)
   extends JsonServlet
-  with ApiVersioningSupport
-  with MethodOverride
-  with UrlGeneratorSupport
-  with GZipSupport
-{
+    with ApiVersioningSupport
+    with MethodOverride
+    with UrlGeneratorSupport
+    with GZipSupport {
   /**
-   * Creates a new session based on the current request. The implementation is responsible for
-   * parsing the body of the request.
-   */
+    * Creates a new session based on the current request. The implementation is responsible for
+    * parsing the body of the request.
+    */
   protected def createSession(req: HttpServletRequest): S
 
   /**
-   * Returns a object representing the session data to be sent back to the client.
-   */
+    * Returns a object representing the session data to be sent back to the client.
+    */
   protected def clientSessionView(session: S, req: HttpServletRequest): Any = session
 
   override def shutdown(): Unit = {
@@ -140,22 +141,22 @@ abstract class SessionServlet[S <: Session, R <: RecoveryMetadata](
   }
 
   /**
-   * Returns the remote user for the given request. Separate method so that tests can override it.
-   */
+    * Returns the remote user for the given request. Separate method so that tests can override it.
+    */
   protected def remoteUser(req: HttpServletRequest): String = req.getRemoteUser()
 
   /**
-   * Checks that the request's user can impersonate the target user.
-   *
-   * If the user does not have permission to impersonate, then halt execution.
-   *
-   * @return The user that should be impersonated. That can be the target user if defined, the
-   *         request's user - which may not be defined - otherwise, or `None` if impersonation is
-   *         disabled.
-   */
+    * Checks that the request's user can impersonate the target user.
+    *
+    * If the user does not have permission to impersonate, then halt execution.
+    *
+    * @return The user that should be impersonated. That can be the target user if defined, the
+    *         request's user - which may not be defined - otherwise, or `None` if impersonation is
+    *         disabled.
+    */
   protected def checkImpersonation(
-      target: Option[String],
-      req: HttpServletRequest): Option[String] = {
+                                    target: Option[String],
+                                    req: HttpServletRequest): Option[String] = {
     if (livyConf.getBoolean(LivyConf.IMPERSONATION_ENABLED)) {
       if (!target.map(hasSuperAccess(_, req)).getOrElse(true)) {
         halt(Forbidden(s"User '${remoteUser(req)}' not allowed to impersonate '$target'."))
@@ -166,58 +167,83 @@ abstract class SessionServlet[S <: Session, R <: RecoveryMetadata](
     }
   }
 
+  private def getUser(req: HttpServletRequest): String = {
+    val proxyUser = if (livyConf.get(AUTH_TYPE) == "basic") {
+      import org.pac4j.core.context.J2EContext
+      import org.pac4j.core.profile.{CommonProfile, ProfileManager}
+      val context = new J2EContext(request, response)
+      val manager = new ProfileManager[CommonProfile](context)
+      val profile = manager.get(false)
+      if (profile.isPresent) {
+        Some(profile.get().getId)
+      }
+      else {
+        None
+      }
+    } else {
+      None
+    }
+    val user = if (livyConf.get(AUTH_TYPE) == "basic") {
+      proxyUser.orNull
+    }
+    else {
+      remoteUser(req)
+    }
+    user
+  }
+
   /**
-   * Check that the request's user has view access to resources owned by the given target user.
-   */
+    * Check that the request's user has view access to resources owned by the given target user.
+    */
   protected def hasViewAccess(target: String, req: HttpServletRequest): Boolean = {
-    val user = remoteUser(req)
+    val user = getUser(req)
     user == target || accessManager.checkViewPermissions(user)
   }
 
   /**
-   * Check that the request's user has modify access to resources owned by the given target user.
-   */
+    * Check that the request's user has modify access to resources owned by the given target user.
+    */
   protected def hasModifyAccess(target: String, req: HttpServletRequest): Boolean = {
-    val user = remoteUser(req)
+    val user = getUser(req)
     user == target || accessManager.checkModifyPermissions(user)
   }
 
   /**
-   * Check that the request's user has admin access to resources owned by the given target user.
-   */
+    * Check that the request's user has admin access to resources owned by the given target user.
+    */
   protected def hasSuperAccess(target: String, req: HttpServletRequest): Boolean = {
-    val user = remoteUser(req)
+    val user = getUser(req)
     user == target || accessManager.checkSuperUser(user)
   }
 
   /**
-   * Performs an operation on the session, without checking for ownership. Operations executed
-   * via this method must not modify the session in any way, or return potentially sensitive
-   * information.
-   */
+    * Performs an operation on the session, without checking for ownership. Operations executed
+    * via this method must not modify the session in any way, or return potentially sensitive
+    * information.
+    */
   protected def withUnprotectedSession(fn: (S => Any)): Any = doWithSession(fn, true, None)
 
   /**
-   * Performs an operation on the session, verifying whether the caller has view access of the
-   * session.
-   */
+    * Performs an operation on the session, verifying whether the caller has view access of the
+    * session.
+    */
   protected def withViewAccessSession(fn: (S => Any)): Any =
     doWithSession(fn, false, Some(hasViewAccess))
 
   /**
-   * Performs an operation on the session, verifying whether the caller has view access of the
-   * session.
-   */
+    * Performs an operation on the session, verifying whether the caller has view access of the
+    * session.
+    */
   protected def withModifyAccessSession(fn: (S => Any)): Any =
     doWithSession(fn, false, Some(hasModifyAccess))
 
   private def doWithSession(fn: (S => Any),
-      allowAll: Boolean,
-      checkFn: Option[(String, HttpServletRequest) => Boolean]): Any = {
+                            allowAll: Boolean,
+                            checkFn: Option[(String, HttpServletRequest) => Boolean]): Any = {
     val sessionId = params("id").toInt
     sessionManager.get(sessionId) match {
       case Some(session) =>
-        if (allowAll || checkFn.map(_(session.owner, request)).getOrElse(false)) {
+        if (allowAll || checkFn.map(_ (session.owner, request)).getOrElse(false)) {
           fn(session)
         } else {
           Forbidden()
