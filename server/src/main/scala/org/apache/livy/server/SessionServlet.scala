@@ -23,9 +23,15 @@ import org.scalatra._
 import scala.concurrent._
 import scala.concurrent.duration._
 
+<<<<<<< HEAD
 import org.apache.livy.LivyConf
 import org.apache.livy.LivyConf.AUTH_TYPE
 import org.apache.livy.Logging
+=======
+import org.apache.livy.{LivyConf, Logging}
+import org.apache.livy.rsc.RSCClientFactory
+import org.apache.livy.server.batch.BatchSession
+>>>>>>> upstream/master
 import org.apache.livy.sessions.{Session, SessionManager}
 import org.apache.livy.sessions.Session.RecoveryMetadata
 
@@ -40,7 +46,7 @@ object SessionServlet extends Logging
   */
 abstract class SessionServlet[S <: Session, R <: RecoveryMetadata](
     private[livy] val sessionManager: SessionManager[S, R],
-    livyConf: LivyConf,
+    val livyConf: LivyConf,
     accessManager: AccessManager)
   extends JsonServlet
     with ApiVersioningSupport
@@ -118,14 +124,24 @@ abstract class SessionServlet[S <: Session, R <: RecoveryMetadata](
     }
   }
 
+  def tooManySessions(): Boolean = {
+    val totalChildProceses = RSCClientFactory.childProcesses().get() +
+      BatchSession.childProcesses.get()
+    totalChildProceses >= livyConf.getInt(LivyConf.SESSION_MAX_CREATION)
+  }
+
   post("/") {
-    val session = sessionManager.register(createSession(request))
-    // Because it may take some time to establish the session, update the last activity
-    // time before returning the session info to the client.
-    session.recordActivity()
-    Created(clientSessionView(session, request),
-      headers = Map("Location" ->
-        (getRequestPathInfo(request) + url(getSession, "id" -> session.id.toString))))
+    if (tooManySessions) {
+      BadRequest("Rejected, too many sessions are being created!")
+    } else {
+      val session = sessionManager.register(createSession(request))
+      // Because it may take some time to establish the session, update the last activity
+      // time before returning the session info to the client.
+      session.recordActivity()
+      Created(clientSessionView(session, request),
+        headers = Map("Location" ->
+          (getRequestPathInfo(request) + url(getSession, "id" -> session.id.toString))))
+    }
   }
 
   private def getRequestPathInfo(request: HttpServletRequest): String = {
