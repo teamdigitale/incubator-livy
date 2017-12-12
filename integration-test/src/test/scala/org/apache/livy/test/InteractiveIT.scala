@@ -43,6 +43,19 @@ class InteractiveIT extends BaseIntegrationTestSuite {
       s.run("throw new IllegalStateException()")
         .verifyError(evalue = ".*java\\.lang\\.IllegalStateException.*")
 
+      // Check if we're running with Spark1 or Spark2, in Spark1 we will use SQLContext, whereas
+      // for Spark2 we will use SparkSession.
+      val entry = if (s.run("spark").result().isLeft) {
+        "spark"
+      } else {
+        "sqlContext"
+      }
+      // Verify query submission
+      s.run(s"""val df = $entry.createDataFrame(Seq(("jerry", 20), ("michael", 21)))""")
+        .verifyResult(".*" + Pattern.quote("df: org.apache.spark.sql.DataFrame") + ".*")
+      s.run("df.registerTempTable(\"people\")").result()
+      s.run("SELECT * FROM people", Some(SQL)).verifyResult(".*\"jerry\",20.*\"michael\",21.*")
+
       // Verify Livy internal configurations are not exposed.
       // TODO separate all these checks to different sub tests after merging new IT code.
       s.run("""sc.getConf.getAll.exists(_._1.startsWith("spark.__livy__."))""")
@@ -66,10 +79,9 @@ class InteractiveIT extends BaseIntegrationTestSuite {
     }
   }
 
-  pytest("pyspark interactive session") {
+  test("pyspark interactive session") {
     withNewSession(PySpark) { s =>
       s.run("1+1").verifyResult("2")
-      s.run("sqlContext").verifyResult(startsWith("<pyspark.sql.context.HiveContext"))
       s.run("sc.parallelize(range(100)).map(lambda x: x * 2).reduce(lambda x, y: x + y)")
         .verifyResult("9900")
       s.run("from pyspark.sql.types import Row").verifyResult("")
@@ -81,7 +93,7 @@ class InteractiveIT extends BaseIntegrationTestSuite {
     }
   }
 
-  rtest("R interactive session") {
+  test("R interactive session") {
     withNewSession(SparkR) { s =>
       // R's output sometimes includes the count of statements, which makes it annoying to test
       // things. This helps a bit.
@@ -89,8 +101,6 @@ class InteractiveIT extends BaseIntegrationTestSuite {
       def count: Int = curr.incrementAndGet()
 
       s.run("1+1").verifyResult(startsWith(s"[$count] 2"))
-      s.run("sqlContext <- sparkRSQL.init(sc)").verifyResult(null)
-      s.run("hiveContext <- sparkRHive.init(sc)").verifyResult(null)
       s.run("""localDF <- data.frame(name=c("John", "Smith", "Sarah"), age=c(19, 23, 18))""")
         .verifyResult(null)
       s.run("df <- createDataFrame(sqlContext, localDF)").verifyResult(null)
