@@ -35,7 +35,11 @@ Add the Livy client dependency to your application's POM:
 <dependency>
   <groupId>org.apache.livy</groupId>
   <artifactId>livy-client-http</artifactId>
+<<<<<<< HEAD
   <version>0.5.0-incubating</version>
+=======
+  <version>0.6.0-incubating</version>
+>>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
 </dependency>
 ```
 

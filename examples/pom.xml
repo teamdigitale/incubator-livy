@@ -23,13 +23,21 @@
   <parent>
     <groupId>org.apache.livy</groupId>
     <artifactId>livy-main</artifactId>
+<<<<<<< HEAD
     <version>0.5.1-incubating-SNAPSHOT</version>
+=======
+    <version>0.6.0-incubating-SNAPSHOT</version>
+>>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>org.apache.livy</groupId>
   <artifactId>livy-examples</artifactId>
+<<<<<<< HEAD
   <version>0.5.1-incubating-SNAPSHOT</version>
+=======
+  <version>0.6.0-incubating-SNAPSHOT</version>
+>>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
   <packaging>jar</packaging>
 
   <properties>

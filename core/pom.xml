@@ -22,12 +22,20 @@
   <parent>
     <groupId>org.apache.livy</groupId>
     <artifactId>multi-scala-project-root</artifactId>
+<<<<<<< HEAD
     <version>0.5.1-incubating-SNAPSHOT</version>
+=======
+    <version>0.6.0-incubating-SNAPSHOT</version>
+>>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
     <relativePath>../scala/pom.xml</relativePath>
   </parent>
 
   <artifactId>livy-core-parent</artifactId>
+<<<<<<< HEAD
   <version>0.5.1-incubating-SNAPSHOT</version>
+=======
+  <version>0.6.0-incubating-SNAPSHOT</version>
+>>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
   <packaging>pom</packaging>
 
   <dependencies>
