@@ -21,29 +21,19 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.livy</groupId>
   <artifactId>livy-repl_2.10</artifactId>
-<<<<<<< HEAD
   <version>0.5.1-incubating-SNAPSHOT</version>
-=======
-  <version>0.6.0-incubating-SNAPSHOT</version>
->>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
   <packaging>jar</packaging>
 
   <parent>
     <groupId>org.apache.livy</groupId>
     <artifactId>livy-repl-parent</artifactId>
-<<<<<<< HEAD
     <version>0.5.1-incubating-SNAPSHOT</version>
-=======
-    <version>0.6.0-incubating-SNAPSHOT</version>
->>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <properties>
     <scala.version>${scala-2.10.version}</scala.version>
     <scala.binary.version>2.10</scala.binary.version>
-    <spark.version>${spark.scala-2.10.version}</spark.version>
-    <netty.version>${netty.spark-2.10.version}</netty.version>
   </properties>
 
 </project>
