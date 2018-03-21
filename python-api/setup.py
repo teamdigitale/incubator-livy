@@ -39,11 +39,7 @@ requirements = [
 
 setup(
     name='livy-python-api',
-<<<<<<< HEAD
     version="0.5.1-incubating-SNAPSHOT",
-=======
-    version="0.6.0-incubating-SNAPSHOT",
->>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
     packages=["livy", "livy-tests"],
     package_dir={
         "": "src/main/python",
