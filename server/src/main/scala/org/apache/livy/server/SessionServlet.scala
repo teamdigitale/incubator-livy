@@ -180,27 +180,21 @@ abstract class SessionServlet[S <: Session, R <: RecoveryMetadata](
   }
 
   private def getUser(req: HttpServletRequest): String = {
-    val proxyUser = if (livyConf.get(AUTH_TYPE) == "basic") {
-      import org.pac4j.core.context.J2EContext
-      import org.pac4j.core.profile.{CommonProfile, ProfileManager}
-      val context = new J2EContext(request, response)
-      val manager = new ProfileManager[CommonProfile](context)
-      val profile = manager.get(false)
-      if (profile.isPresent) {
-        Some(profile.get().getId)
-      }
-      else {
-        None
-      }
-    } else {
-      None
-    }
-    val user = if (livyConf.get(AUTH_TYPE) == "basic") {
-      proxyUser.orNull
-    }
-    else {
-      remoteUser(req)
-    }
+    val proxyUser =
+      if (livyConf.get(AUTH_TYPE) == "basic") {
+        import org.pac4j.core.context.J2EContext
+        import org.pac4j.core.profile.{CommonProfile, ProfileManager}
+        val context = new J2EContext(request, response)
+        val manager = new ProfileManager[CommonProfile](context)
+        val profile = manager.get(false)
+        if (profile.isPresent) Some(profile.get().getId)
+        else None
+    } None
+
+    val user =
+      if (livyConf.get(AUTH_TYPE) == "basic") proxyUser.orNull
+      else remoteUser(req)
+
     user
   }
 
