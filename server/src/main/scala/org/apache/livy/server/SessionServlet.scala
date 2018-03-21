@@ -23,15 +23,11 @@ import org.scalatra._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-<<<<<<< HEAD
-import org.apache.livy.LivyConf
 import org.apache.livy.LivyConf.AUTH_TYPE
 import org.apache.livy.Logging
-=======
 import org.apache.livy.{LivyConf, Logging}
 import org.apache.livy.rsc.RSCClientFactory
 import org.apache.livy.server.batch.BatchSession
->>>>>>> upstream/master
 import org.apache.livy.sessions.{Session, SessionManager}
 import org.apache.livy.sessions.Session.RecoveryMetadata
 
