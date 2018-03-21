@@ -19,21 +19,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.livy</groupId>
   <artifactId>livy-core_2.10</artifactId>
-<<<<<<< HEAD
   <version>0.5.1-incubating-SNAPSHOT</version>
-=======
-  <version>0.6.0-incubating-SNAPSHOT</version>
->>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
   <packaging>jar</packaging>
 
   <parent>
     <groupId>org.apache.livy</groupId>
     <artifactId>livy-core-parent</artifactId>
-<<<<<<< HEAD
     <version>0.5.1-incubating-SNAPSHOT</version>
-=======
-    <version>0.6.0-incubating-SNAPSHOT</version>
->>>>>>> [LIVY-434][BUILD] Update master to version 0.6.0-incubating-SNAPSHOT
     <relativePath>../pom.xml</relativePath>
   </parent>
 
