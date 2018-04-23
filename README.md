@@ -1,6 +1,6 @@
 # Apache Livy
 
-[![Build Status](https://travis-ci.org/apache/incubator-livy.svg?branch=master)](https://travis-ci.org/apache/incubator-livy)
+[![Build Status](https://travis-ci.org/teamdigitale/incubator-livy.svg?branch=master)](https://travis-ci.org/teamdigitale/incubator-livy)
 
 Apache Livy is an open source REST interface for interacting with
 [Apache Spark](http://spark.apache.org) from anywhere. It supports executing snippets of code or

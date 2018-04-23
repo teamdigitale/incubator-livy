@@ -194,6 +194,10 @@
         <enabled>false</enabled>
       </snapshots>
     </repository>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
   </repositories>
 
   <modules>
@@ -686,7 +690,7 @@
           <configuration>
             <scalaVersion>${scala.version}</scalaVersion>
             <recompileMode>incremental</recompileMode>
-            <useZincServer>true</useZincServer>
+            <useZincServer>false</useZincServer>
             <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
             <args>
               <arg>-unchecked</arg>
