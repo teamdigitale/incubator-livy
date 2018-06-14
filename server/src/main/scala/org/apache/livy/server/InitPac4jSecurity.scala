@@ -20,19 +20,19 @@ package org.apache.livy.server
 import java.security.InvalidParameterException
 import java.time.Duration
 
-import org.ldaptive.{BindConnectionInitializer, ConnectionConfig, Credential, DefaultConnectionFactory}
-import org.ldaptive.auth.{Authenticator, FormatDnResolver, PooledBindAuthenticationHandler}
+import org.ldaptive.{ BindConnectionInitializer, ConnectionConfig, Credential, DefaultConnectionFactory }
+import org.ldaptive.auth.{ Authenticator, FormatDnResolver, PooledBindAuthenticationHandler }
 import org.ldaptive.pool._
 import org.ldaptive.ssl.SslConfig
 import org.pac4j.core.client.Clients
 import org.pac4j.core.config.Config
-import org.pac4j.http.client.direct.{DirectBasicAuthClient, HeaderClient}
+import org.pac4j.http.client.direct.{ DirectBasicAuthClient, HeaderClient }
 import org.pac4j.http.credentials.authenticator.test.SimpleTestUsernamePasswordAuthenticator
 import org.pac4j.jwt.config.signature.SecretSignatureConfiguration
 import org.pac4j.jwt.credentials.authenticator.JwtAuthenticator
 import org.pac4j.ldap.profile.service.LdapProfileService
-
 import org.apache.livy.LivyConf
+import org.pac4j.http.client.indirect.IndirectBasicAuthClient
 
 object InitPac4jSecurity {
 
@@ -126,12 +126,11 @@ object InitPac4jSecurity {
       case _ => getLdapAuthenticator
     }
     val directBasicAuthClient = new DirectBasicAuthClient(authenticator)
-    val secret = livyConf.map(_.get("livy.server.pac4j.jwt_secret"))
+    val secret = livyConf.flatMap { conf => Option(conf.get("livy.server.pac4j.jwt_secret")) }
     val jwtAuthenticator = new JwtAuthenticator()
-    secret.foreach(secret =>
-      jwtAuthenticator.
-        addSignatureConfiguration(new SecretSignatureConfiguration(secret))
-    )
+    secret.foreach { secret =>
+      jwtAuthenticator.addSignatureConfiguration { new SecretSignatureConfiguration(secret) }
+    }
     val parameterClient = new HeaderClient("Authorization", "Bearer ", jwtAuthenticator)
     config = Some(new Config(new Clients(directBasicAuthClient, parameterClient)))
   }

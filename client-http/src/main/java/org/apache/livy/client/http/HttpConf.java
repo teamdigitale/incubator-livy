@@ -42,7 +42,9 @@ class HttpConf extends ClientConf<HttpConf> {
     SPNEGO_ENABLED("spnego.enable", false),
     AUTH_LOGIN_CONFIG("auth.login.config", null),
     KRB5_DEBUG_ENABLED("krb5.debug", false),
-    KRB5_CONF("krb5.conf", null);
+    KRB5_CONF("krb5.conf", null),
+
+    AUTH_SCHEME("auth.scheme", null);
 
     private final String key;
     private final Object dflt;

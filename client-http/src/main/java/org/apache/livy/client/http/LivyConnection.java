@@ -23,16 +23,15 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthSchemeProvider;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.auth.*;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
@@ -44,11 +43,12 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.NoConnectionReuseStrategy;
-import org.apache.http.impl.auth.SPNegoSchemeFactory;
+import org.apache.http.impl.auth.*;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
 import static org.apache.livy.client.http.HttpConf.Entry.*;
@@ -66,9 +66,10 @@ class LivyConnection {
   private final String uriRoot;
   private final CloseableHttpClient client;
   private final ObjectMapper mapper;
+  private final HttpContext httpContext;
 
   LivyConnection(URI uri, final HttpConf config) {
-    HttpClientContext ctx = HttpClientContext.create();
+
     int port = uri.getPort() > 0 ? uri.getPort() : 8998;
 
     String path = uri.getPath() != null ? uri.getPath() : "";
@@ -152,6 +153,7 @@ class LivyConnection {
     this.server = uri;
     this.client = builder.build();
     this.mapper = new ObjectMapper();
+    this.httpContext = createContext(config, credsProvider);
   }
 
   synchronized void close() throws IOException {
@@ -203,6 +205,48 @@ class LivyConnection {
     return sendRequest(req, retType, uri, uriParams);
   }
 
+  private HttpContext createContext(HttpConf config, CredentialsProvider credentialsProvider) {
+    String authSchemeConfig = config.get(HttpConf.Entry.AUTH_SCHEME);
+
+    if (authSchemeConfig == null) {
+      return null;
+    }
+
+    HttpClientContext context = HttpClientContext.create();
+    AuthScheme targetAuthSceme;
+    Registry<AuthSchemeProvider> authSchemeProviderRegistry;
+
+    if ("basic".equalsIgnoreCase(authSchemeConfig)) { targetAuthSceme = new BasicScheme(); }
+    else if ("digest".equalsIgnoreCase(authSchemeConfig)) { targetAuthSceme = new DigestScheme(); }
+    else if ("ntlm".equalsIgnoreCase(authSchemeConfig)) { targetAuthSceme = new NTLMScheme(); }
+    else if ("kerberos".equalsIgnoreCase(authSchemeConfig)) { targetAuthSceme = new KerberosScheme(); }
+    else if ("spnego".equalsIgnoreCase(authSchemeConfig)) { targetAuthSceme = new SPNegoScheme(); }
+    else { throw new IllegalArgumentException("Invalid auth scheme setting " + authSchemeConfig); }
+
+    if (targetAuthSceme.getSchemeName().equals(AuthSchemes.SPNEGO)) {
+      authSchemeProviderRegistry = RegistryBuilder.<AuthSchemeProvider>create().register(AuthSchemes.SPNEGO, new SPNegoSchemeFactory()).build();
+    } else {
+      authSchemeProviderRegistry = RegistryBuilder.<AuthSchemeProvider>create()
+              .register("Basic", new BasicSchemeFactory())
+              .register("Digest", new DigestSchemeFactory())
+              .register("NTLM", new NTLMSchemeFactory())
+              .register("Negotiate", new SPNegoSchemeFactory())
+              .register("Kerberos", new KerberosSchemeFactory())
+              .build();
+    }
+
+    AuthState targetAuthState = new AuthState();
+    targetAuthState.setState(AuthProtocolState.CHALLENGED);
+    targetAuthState.update(targetAuthSceme, credentialsProvider.getCredentials(AuthScope.ANY));
+
+    context.setCredentialsProvider(credentialsProvider);
+    context.setAttribute("http.auth.target-scope", targetAuthState);
+    context.setAuthSchemeRegistry(authSchemeProviderRegistry);
+
+    return context;
+
+  }
+
   private <V> V sendRequest(
       HttpRequestBase req,
       Class<V> retType,
@@ -215,7 +259,7 @@ class LivyConnection {
             || req instanceof  HttpPatch) {
       req.addHeader("X-Requested-By", "livy");
     }
-    try (CloseableHttpResponse res = client.execute(req)) {
+    try (CloseableHttpResponse res = client.execute(req, httpContext)) {
       int status = (res.getStatusLine().getStatusCode() / 100) * 100;
       HttpEntity entity = res.getEntity();
       if (status == HttpStatus.SC_OK) {
